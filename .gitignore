@@ -1,6 +1,4 @@
 .idea/
-.venv/
-pyproject.toml
 cred.json
 .guest_stories
 __pycache__
