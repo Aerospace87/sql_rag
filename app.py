@@ -1,5 +1,6 @@
 from llama_index.core.workflow import Context
 from agents import alfred, ToolCallResult, AgentStream, asyncio, debug_agent
+from retriever import get_sql_data
 import sys
 
 debug = True
@@ -7,17 +8,19 @@ context = True
 
 async def main():
 
-    query = "Who is the current president of US in 2025?"
+    # Creation of the SQL-RAG prompt
+    query = "Identify the most expensive article"
+    prompt = get_sql_data(query, top_n=2)
 
     if context:
         # Creation of the context necessary to give "memory" to the agent
         ctx = Context(alfred)
 
         # Handler to await later
-        handler = alfred.run(query, ctx = ctx)
+        handler = alfred.run(prompt, ctx = ctx)
     else:
         # Handler to await later
-        handler = alfred.run(query)
+        handler = alfred.run(prompt)
 
     if debug:
         await debug_agent(handler)

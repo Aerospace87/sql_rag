@@ -1,7 +1,8 @@
 import datasets
-import json
 from llama_index.core.schema import Document
-from psycopg2 import connect
+from functions import build_prompt, get_connection_details, run_query, rag_prompt, json
+from reranker import table_declarations, rank_tables
+import agents
 
 
 def load_guest_dataset() -> list:
@@ -25,39 +26,28 @@ def load_guest_dataset() -> list:
     return docs
 
 
-def get_connection_details(connection_file, source_name):
-    """Function to read postgres db connection details from file"""
-    with open(connection_file, 'r') as fh:
-        data = json.load(fh)
+def get_sql_data(query, top_n=2):
+    top_n_tables_decl = rank_tables(query, table_declarations, top_n)
 
-        for source in data["sources"]:
-            if source["source_name"] == source_name:
-                return source["host"], source["port"], source["dbname"], source["user"], source["password"]
+    top_n_tables_decl = [table[1] for table in top_n_tables_decl]
 
+    prompt = build_prompt(query, top_n_tables_decl)
 
+    response = agents.llm.complete(prompt)
+
+    sql_query = str(response)\
+        .replace("```sql", "")\
+        .replace("```", "")
+
+    host, port, dbname, user, password = get_connection_details("cred.json", "testdb")
+
+    json_table = json.dumps(str(run_query(sql_query, host, port, dbname, user, password)))
+
+    return rag_prompt(query, json_table, sql_query)
 
 
 if __name__ == '__main__':
-    host, port, dbname, user, password = get_connection_details("cred.json", "testdb")
+    query = "Identify the most expensive article"
 
-    conn = connect(
-        host=host,
-        port=port,
-        dbname=dbname,
-        user=user,
-        password=password
-    )
-
-    cur = conn.cursor()
-
-    query = """
-        select
-            *
-        from public.articoli
-        limit 10
-    """
-
-    res = cur.execute(query)
-
-    print(cur.fetchall())
+    print(get_sql_data(query, top_n=2))
 
