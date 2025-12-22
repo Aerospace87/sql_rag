@@ -27,13 +27,19 @@ def load_guest_dataset() -> list:
 
 
 def get_sql_data(query, top_n=2):
-    top_n_tables_decl = rank_tables(query, table_declarations, top_n)
+    try:
+        top_n_tables_decl = rank_tables(query, table_declarations, top_n)
+    except Exception as e:
+        raise Exception("Ranking tables definition failed:\n{str(e)}")
 
     top_n_tables_decl = [table[1] for table in top_n_tables_decl]
 
     prompt = build_prompt(query, top_n_tables_decl)
 
-    response = agents.llm.complete(prompt)
+    try:
+        response = agents.llm.complete(prompt)
+    except Exception as e:
+        raise Exception("Creation of sql query for RAG failed:\n{str(e)}")
 
     sql_query = str(response)\
         .replace("```sql", "")\
@@ -41,7 +47,7 @@ def get_sql_data(query, top_n=2):
 
     host, port, dbname, user, password = get_connection_details("cred.json", "testdb")
 
-    json_table = json.dumps(str(run_query(sql_query, host, port, dbname, user, password)))
+    json_table = json.dumps(run_query(sql_query, host, port, dbname, user, password))
 
     return rag_prompt(query, json_table, sql_query)
 
