@@ -47,7 +47,12 @@ def get_sql_data(query, top_n=2):
 
     host, port, dbname, user, password = get_connection_details("cred.json", "testdb")
 
-    json_table = json.dumps(run_query(sql_query, host, port, dbname, user, password))
+    sql_response = run_query(sql_query, host, port, dbname, user, password)
+
+    if len(sql_response) == 0:
+        raise Exception(f"The following sql query used to retrieve information did not return any result:\n{sql_query}")
+
+    json_table = json.dumps(sql_response)
 
     return rag_prompt(query, json_table, sql_query)
 
