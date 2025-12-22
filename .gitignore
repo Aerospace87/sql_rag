@@ -1,4 +1,4 @@
-.idea/
-cred.json
+webapp/.idea/
+webapp/cred.json
 .guest_stories
-__pycache__
+webapp/__pycache__

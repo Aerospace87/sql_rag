@@ -3,14 +3,14 @@ from agents import alfred, ToolCallResult, AgentStream, asyncio, debug_agent
 from retriever import get_sql_data
 import sys
 
-debug = True
-context = True
+debug = False
+context = False
 
 async def main():
 
     # Creation of the SQL-RAG prompt
-    query = "Identify the most expensive article"
-    prompt = get_sql_data(query, top_n=2)
+    query = "Can you tell me all the barcodes of the article VINO S.E M.TORBAT.ALGHERO CL75?"
+    prompt = get_sql_data(query, top_n=3)
 
     if context:
         # Creation of the context necessary to give "memory" to the agent
