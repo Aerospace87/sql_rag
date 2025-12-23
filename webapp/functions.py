@@ -22,12 +22,17 @@ The SQL query should use only tables with the following SQL definitions:
 
 def get_connection_details(connection_file, source_name):
     """Function to read postgres db connection details from file"""
-    with open(connection_file, 'r') as fh:
-        data = json.load(fh)
+    try:
+        with open(connection_file, 'r') as fh:
+            data = json.load(fh)
+    except Exception as e:
+        import os
+        dirs = os.listdir(os.getcwd())
+        raise Exception(f"The file {connection_file} not in the folder. The following files are present:\n{dirs}")
 
-        for source in data["sources"]:
-            if source["source_name"] == source_name:
-                return source["host"], source["port"], source["dbname"], source["user"], source["password"]
+    for source in data["sources"]:
+        if source["source_name"] == source_name:
+            return source["host"], source["port"], source["dbname"], source["user"], source["password"]
 
 def run_query(query, host, port, dbname, user, password):
     """Function running a query on the database"""
