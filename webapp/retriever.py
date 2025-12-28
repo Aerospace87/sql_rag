@@ -45,7 +45,7 @@ def get_sql_data(query, top_n=2):
         .replace("```sql", "")\
         .replace("```", "")
 
-    host, port, dbname, user, password = get_connection_details("cred.json", "testdb")
+    host, port, dbname, user, password = get_connection_details("../creds/cred.json", "testdb")
 
     sql_response = run_query(sql_query, host, port, dbname, user, password)
 

@@ -1,5 +1,5 @@
 webapp/.idea/
-webapp/cred.json
 .guest_stories
 webapp/__pycache__
 .idea
+creds/
