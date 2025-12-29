@@ -2,7 +2,7 @@ import datasets
 from llama_index.core.schema import Document
 from functions import build_prompt, get_connection_details, run_query, rag_prompt, json
 from reranker import table_declarations, rank_tables
-import agents
+from models import llm
 
 
 def load_guest_dataset() -> list:
@@ -37,7 +37,7 @@ def get_sql_data(query, top_n=2):
     prompt = build_prompt(query, top_n_tables_decl)
 
     try:
-        response = agents.llm.complete(prompt)
+        response = llm.complete(prompt)
     except Exception as e:
         raise Exception("Creation of sql query for RAG failed:\n{str(e)}")
 
