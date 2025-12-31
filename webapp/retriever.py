@@ -45,7 +45,14 @@ def get_sql_data(query, top_n=2):
         .replace("```sql", "")\
         .replace("```", "")
 
-    host, port, dbname, user, password = get_connection_details("../creds/cred.json", "testdb")
+    host, port, dbname, user, password = get_connection_details(
+        mode="env",
+        host_env="pg_host",
+        port_env="pg_port",
+        db_env="pg_db",
+        user_env="pg_user",
+        pwd_env ="pg_password"
+    )
 
     sql_response = run_query(sql_query, host, port, dbname, user, password)
 

@@ -20,19 +20,44 @@ The SQL query should use only tables with the following SQL definitions:
 
     return prompt
 
-def get_connection_details(connection_file, source_name):
+def get_connection_details(
+        mode=None,
+        connection_file=None,
+        source_name=None,
+        host_env=None,
+        port_env=None,
+        db_env=None,
+        user_env=None,
+        pwd_env =None
+    ):
     """Function to read postgres db connection details from file"""
-    try:
-        with open(connection_file, 'r') as fh:
-            data = json.load(fh)
-    except Exception as e:
-        import os
-        dirs = os.listdir(os.getcwd())
-        raise Exception(f"The file {connection_file} not in the folder. The following files are present:\n{dirs}")
+    if mode == "file":
+        # In case connections details are provided through a json file
+        try:
+            with open(connection_file, 'r') as fh:
+                data = json.load(fh)
+        except Exception as e:
+            import os
+            dirs = os.listdir(os.getcwd())
+            raise Exception(f"The file {connection_file} not in the folder. The following files are present:\n{dirs}")
 
-    for source in data["sources"]:
-        if source["source_name"] == source_name:
-            return source["host"], source["port"], source["dbname"], source["user"], source["password"]
+        for source in data["sources"]:
+            if source["source_name"] == source_name:
+                return source["host"], source["port"], source["dbname"], source["user"], source["password"]
+
+    elif mode == "env":
+        # In case connections details are provided via environment variables
+        import os
+
+        host = os.getenv(host_env)
+        port = os.getenv(port_env)
+        dbname = os.getenv(db_env)
+        user = os.getenv(user_env)
+        pwd = os.getenv(pwd_env)
+        return host, port, dbname, user, pwd
+
+    else:
+        raise ValueError(f"The mode inserted ({mode}) is not supported. Please choose between 'env' and 'file'")
 
 def run_query(query, host, port, dbname, user, password):
     """Function running a query on the database"""
