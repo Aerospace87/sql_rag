@@ -3,3 +3,5 @@ webapp/.idea/
 webapp/__pycache__
 .idea
 creds/
+postgres_container/data
+postgres_container/AlphaShop.sql

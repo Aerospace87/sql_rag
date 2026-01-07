@@ -10,8 +10,7 @@ ARG VERSION
 LABEL org.label-schema.version=$VERSION
 
 # Copy files from the current directory to the container working directory
-COPY requirements.txt .
-#COPY ./webapp/* .
+COPY ./requirements.txt .
 
 # Update system, installing python, pip, packages and clean apt-get lists
 RUN apt-get update && \
@@ -20,6 +19,5 @@ RUN apt-get update && \
     pip install -r requirements.txt --break-system-packages --no-cache-dir && \
     rm -rf /var/lib/apt/lists/*
 
-#ENTRYPOINT ["/bin/bash"]
 
-CMD ["fastapi", "dev", "app.py", "--port", "8000"]
+CMD ["fastapi", "run", "app.py", "--port", "8000"]
