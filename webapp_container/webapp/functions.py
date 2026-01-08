@@ -1,5 +1,6 @@
 import json
 from psycopg2 import connect
+from decimal import Decimal
 
 def build_prompt(query, tables):
     """Function to generate a prompt to instruct the agent to create a sql query"""
@@ -95,6 +96,20 @@ table does not provide the information to answer the question, answer
 """
 
     return prompt
+
+def convert_dtype(lst:list)-> list:
+    result = list()
+    for row in lst:
+        col = tuple()
+        for col_value in row:
+            if isinstance(col_value, Decimal):
+                col += (float(col_value),)
+            else:
+                col += (col_value,)
+        result.append(col)
+    return result
+
+
 
 if __name__ == "__main__":
     print(build_prompt("ciao", "a", "b"))

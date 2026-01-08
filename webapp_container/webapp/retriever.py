@@ -1,6 +1,6 @@
 import datasets
 from llama_index.core.schema import Document
-from functions import build_prompt, get_connection_details, run_query, rag_prompt, json
+from functions import build_prompt, get_connection_details, run_query, rag_prompt, json, convert_dtype
 from reranker import table_declarations, rank_tables
 from models import llm
 
@@ -59,13 +59,16 @@ def get_sql_data(query, top_n=2):
     if len(sql_response) == 0:
         raise Exception(f"The following sql query used to retrieve information did not return any result:\n{sql_query}")
 
+    # Converting decimal objects into float to create a json string
+    sql_response = convert_dtype(sql_response)
+
     json_table = json.dumps(sql_response)
 
     return rag_prompt(query, json_table, sql_query)
 
 
 if __name__ == '__main__':
-    query = "Identify the most expensive article"
+    query = "Identify the price of the most expensive article"
 
     print(get_sql_data(query, top_n=2))
 
