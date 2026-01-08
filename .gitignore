@@ -1,6 +1,6 @@
-webapp/.idea/
+webapp_container/webapp/.idea/
 .guest_stories
-webapp/__pycache__
+webapp_container/webapp/__pycache__
 .idea
 creds/
 postgres_container/data
