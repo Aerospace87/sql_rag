@@ -109,7 +109,137 @@ def convert_dtype(lst:list)-> list:
         result.append(col)
     return result
 
+def get_ddl_query(table_schema, table_name):
+    ddl_query = f"""
+with cols as (
+select
+	c.column_name,
+	case
+		when c.data_type like 'character%' then concat(c.udt_name, '(', character_maximum_length , ')')
+		else c.udt_name
+	end as full_data_type,
+	case
+		when column_default is not null then concat('DEFAULT', ' ', column_default)
+		else ''
+		end as default,
+	case
+		when c.is_nullable = 'YES' then 'NULL'
+		else 'NOT NULL'
+	end as nullable
+	from information_schema.columns c
+	where table_schema = '{table_schema}' and table_name = '{table_name}'
+	order by ordinal_position asc
+),
+cols_final as (
+	select
+		string_agg(concat(c.column_name, ' ', c.full_data_type, ' ', c.default, ' ', c.nullable), ',\n') as lin
+	from cols c
+),
+pk_and_fk as(
+	select
+		contype as costraint_type,
+		conrelid::regclass AS table_from,
+    	conname as constraint_name,
+    	pg_get_constraintdef(oid) as costraint_definition
+from   pg_catalog.pg_constraint
+where  contype IN ('f', 'p ') AND connamespace = '{table_schema}'::regnamespace and conrelid::regclass::text = '{table_name}'
+order by 
+	conrelid::regclass ,
+	contype DESC
+),
+pk_and_fk_final as(
+	select
+		string_agg(concat('CONSTRAINT', ' ', pf.constraint_name, ' ', pf.costraint_definition), ',\n') as lin
+	from pk_and_fk pf
+),
+unio as (
+	select
+		1 as ord,
+		lin 
+	from cols_final
+	union
+	select
+		2 as ord,
+		lin 
+	from pk_and_fk_final
+	order by ord
+)
+select
+	concat('CREATE TABLE {table_schema}.{table_name} (\n',string_agg(lin, ',\n'), '\n)') as ddl
+from unio"""
+    return ddl_query
+
+def get_ddl_table(table_schema, table_name):
+    ddl_query = get_ddl_query(table_schema, table_name)
+
+    host, port, dbname, user, password = get_connection_details(
+        mode="file",
+        connection_file="../../creds/cred.json",
+        source_name="testdb",
+        host_env=None,
+        port_env=None,
+        db_env=None,
+        user_env=None,
+        pwd_env =None
+    )
+
+    try:
+        result = run_query(ddl_query, host, port, dbname, user, password)
+
+    except Exception as e:
+        raise Exception(f"Error: the table {table_schema}.{table_name} has not been found.Details:\n{str(e)}")
+
+    return result[0][0]
+
+def get_tables_in_schema_query(table_schema):
+    query = f"""
+select 
+	table_name 
+from information_schema.tables
+where table_schema = '{table_schema}'    
+    """
+
+    return query
+
+def get_tables_in_schema(table_schema):
+    query = get_tables_in_schema_query(table_schema)
+
+    host, port, dbname, user, password = get_connection_details(
+        mode="file",
+        connection_file="../../creds/cred.json",
+        source_name="testdb",
+        host_env=None,
+        port_env=None,
+        db_env=None,
+        user_env=None,
+        pwd_env =None
+    )
+
+    try:
+        result = run_query(query, host, port, dbname, user, password)
+
+    except Exception as e:
+        raise Exception(f"Error: the table {table_schema}.{table_name} has not been found.Details:\n{str(e)}")
+
+    return result
+
+def tables_definitions_in_the_schema(table_schema):
+    tables = get_tables_in_schema(table_schema)
+
+    ddls = []
+    for table in tables:
+
+        ddl_table = get_ddl_table(table_schema, table[0])
+
+        ddls.append(ddl_table)
+
+    return ddls
+
 
 
 if __name__ == "__main__":
-    print(build_prompt("ciao", "a", "b"))
+    print(build_prompt("ciao", ["a", "b"]))
+
+    print(get_ddl_table("public", "articoli"))
+
+    print(tables_definitions_in_the_schema("public"))
