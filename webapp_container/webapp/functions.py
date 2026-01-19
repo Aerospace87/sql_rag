@@ -169,18 +169,29 @@ select
 from unio"""
     return ddl_query
 
-def get_ddl_table(table_schema, table_name):
+def get_ddl_table(
+        table_schema,
+        table_name,
+        mode="env",
+        connection_file=None,
+        source_name=None,
+        host_env="pg_host",
+        port_env="pg_port",
+        db_env="pg_db",
+        user_env="pg_user",
+        pwd_env="pg_password"):
+
     ddl_query = get_ddl_query(table_schema, table_name)
 
     host, port, dbname, user, password = get_connection_details(
-        mode="file",
-        connection_file="../../creds/cred.json",
-        source_name="testdb",
-        host_env=None,
-        port_env=None,
-        db_env=None,
-        user_env=None,
-        pwd_env =None
+        mode=mode,
+        connection_file=connection_file,
+        source_name=source_name,
+        host_env=host_env,
+        port_env=port_env,
+        db_env=db_env,
+        user_env=user_env,
+        pwd_env =pwd_env
     )
 
     try:
@@ -201,35 +212,46 @@ where table_schema = '{table_schema}'
 
     return query
 
-def get_tables_in_schema(table_schema):
+def get_tables_in_schema(table_schema, mode, connection_file, source_name, host_env, port_env, db_env, user_env, pwd_env):
     query = get_tables_in_schema_query(table_schema)
 
     host, port, dbname, user, password = get_connection_details(
-        mode="file",
-        connection_file="../../creds/cred.json",
-        source_name="testdb",
-        host_env=None,
-        port_env=None,
-        db_env=None,
-        user_env=None,
-        pwd_env =None
+        mode=mode,
+        connection_file=connection_file,
+        source_name=source_name,
+        host_env=host_env,
+        port_env=port_env,
+        db_env=db_env,
+        user_env=user_env,
+        pwd_env =pwd_env
     )
 
     try:
         result = run_query(query, host, port, dbname, user, password)
 
     except Exception as e:
-        raise Exception(f"Error: the table {table_schema}.{table_name} has not been found.Details:\n{str(e)}")
+        raise Exception(f"Error: the schema {table_schema} ad a problem.Details:\n{str(e)}")
 
     return result
 
-def tables_definitions_in_the_schema(table_schema):
-    tables = get_tables_in_schema(table_schema)
+def tables_definitions_in_the_schema(
+        table_schema,
+        mode="env",
+        connection_file=None,
+        source_name=None,
+        host_env="pg_host",
+        port_env="pg_port",
+        db_env="pg_db",
+        user_env="pg_user",
+        pwd_env="pg_password"
+):
+
+    tables = get_tables_in_schema(table_schema, mode, connection_file, source_name, host_env, port_env, db_env, user_env, pwd_env)
 
     ddls = []
     for table in tables:
 
-        ddl_table = get_ddl_table(table_schema, table[0])
+        ddl_table = get_ddl_table(table_schema, table[0], mode, connection_file, source_name, host_env, port_env, db_env, user_env, pwd_env)
 
         ddls.append(ddl_table)
 
@@ -240,6 +262,4 @@ def tables_definitions_in_the_schema(table_schema):
 if __name__ == "__main__":
     print(build_prompt("ciao", ["a", "b"]))
 
-    print(get_ddl_table("public", "articoli"))
-
-    print(tables_definitions_in_the_schema("public"))
+    print(tables_definitions_in_the_schema("public")
