@@ -3,6 +3,7 @@ from llama_index.core.schema import Document
 from functions import build_prompt, get_connection_details, run_query, rag_prompt, json, convert_dtype
 from reranker import table_declarations, rank_tables
 from models import llm
+from chromadb import HttpClient
 
 
 def load_guest_dataset() -> list:
@@ -65,6 +66,19 @@ def get_sql_data(query, top_n=2):
     json_table = json.dumps(sql_response)
 
     return rag_prompt(query, json_table, sql_query)
+
+def get_data_from_semantic_search(query, collection_name, top_n=2, host="localhost", port=8000):
+    chroma_client = HttpClient(host=host, port=port)
+
+    collection = chroma_client.get_collection(name=collection_name)
+
+    results = collection.query(
+        query_texts=query,
+        n_results=top_n
+    )
+
+    return results["documents"]
+
 
 
 if __name__ == '__main__':
