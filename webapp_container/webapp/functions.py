@@ -262,4 +262,4 @@ def tables_definitions_in_the_schema(
 if __name__ == "__main__":
     print(build_prompt("ciao", ["a", "b"]))
 
-    print(tables_definitions_in_the_schema("public")
+    print(tables_definitions_in_the_schema("public"))
