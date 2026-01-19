@@ -1,6 +1,7 @@
 import json
 from psycopg2 import connect
 from decimal import Decimal
+from datetime import date
 
 def build_prompt(query, tables):
     """Function to generate a prompt to instruct the agent to create a sql query"""
@@ -104,6 +105,8 @@ def convert_dtype(lst:list)-> list:
         for col_value in row:
             if isinstance(col_value, Decimal):
                 col += (float(col_value),)
+            elif isinstance(col_value, date):
+                col += (str(col_value),)
             else:
                 col += (col_value,)
         result.append(col)
