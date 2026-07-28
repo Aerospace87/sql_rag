@@ -8,4 +8,6 @@ podman run -ti -d \
 --secret pg_password,type=env,target=pg_password \
 --secret pg_port,type=env,target=pg_port \
 --secret pg_user,type=env,target=pg_user \
---name sql_rag_dev -v ./webapp:/webapp localhost/sql_rag_dev
+--name sql_rag_dev \
+-v ./webapp:/webapp \
+localhost/sql_rag_dev

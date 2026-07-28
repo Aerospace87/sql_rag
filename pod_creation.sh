@@ -3,7 +3,7 @@
 # Inform the user abut the type of mode to create the pod: dev or prod.
 # Creation of a pod named pod_rag_dev. Note that the option --network host
 # should be used only for dev and not prod because shares the host network entirely
-# with the pod and is insecure. In prod we should use port mapping like -p 543:5432
+# with the pod and is insecure. In prod we should use port mapping like -p 5432:5432
 if [ $1 == "dev" ]; then
     echo "Development mode !"
     podman pod create --network host pod_rag_dev
@@ -38,6 +38,12 @@ podman run -ti -d \
 --secret pg_user,type=env,target=pg_user \
 -v ./webapp_container/webapp:/webapp \
 localhost/sql_rag_dev
+
+# Creation of the container mlflow to use mlflow UI running on 0.0.0.0:5001
+podman run -d --rm \
+--name mlflow \
+--pod pod_rag_dev \
+mlflow_img
 
 # Show the pod created
 podman pod ls
