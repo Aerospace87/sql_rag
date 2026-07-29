@@ -5,28 +5,6 @@ from reranker import table_declarations, rank_tables
 from models import llm
 from chromadb import HttpClient
 
-
-def load_guest_dataset() -> list:
-    # Load the dataset
-    guest_dataset = datasets.load_dataset("agents-course/unit3-invitees", split="train")
-
-    # Convert dataset entries into Document objects
-    docs = [
-        Document(
-            text="\n".join([
-                f"Name: {guest_dataset['name'][i]}",
-                f"Relation: {guest_dataset['relation'][i]}",
-                f"Description: {guest_dataset['description'][i]}",
-                f"Email: {guest_dataset['email'][i]}"
-            ]),
-            metadata={"name": guest_dataset['name'][i]}
-        )
-        for i in range(len(guest_dataset))
-    ]
-
-    return docs
-
-
 def get_sql_data(query, top_n=2):
     try:
         top_n_tables_decl = rank_tables(query, table_declarations, top_n)
