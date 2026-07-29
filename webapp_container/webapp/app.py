@@ -12,7 +12,6 @@ async def main(query: str):
     context = False
 
     # Creation of the SQL-RAG prompt
-    #query = "Can you tell me all the barcodes of the article VINO S.E M.TORBAT.ALGHERO CL75?"
     prompt = get_sql_data(query, top_n=3)
 
     if context:
