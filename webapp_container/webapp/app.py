@@ -27,9 +27,6 @@ async def main(query: str):
     try:
         with mlflow.start_run():
             response = await alfred.run(prompt)
-
-            print("🎩 Alfred's Response:")
-            print(response)
             
             return {"query": query, "response": str(response)}
 
