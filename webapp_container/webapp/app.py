@@ -39,7 +39,3 @@ async def main(query: str):
 
 
     return {"query": query, "response": str(response)}
-
-
-#if __name__ == "__main__":
-#    asyncio.run(main())
