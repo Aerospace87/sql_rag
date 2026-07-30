@@ -1,5 +1,6 @@
-import json
+import simplejson as json
 from psycopg2 import connect
+from psycopg2.extras import RealDictCursor
 from decimal import Decimal
 from datetime import date
 
@@ -71,7 +72,7 @@ def run_query(query, host, port, dbname, user, password):
         password=password
     )
 
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
     res = cur.execute(query)
 
@@ -97,20 +98,6 @@ table does not provide the information to answer the question, answer
 """
 
     return prompt
-
-def convert_dtype(lst:list)-> list:
-    result = list()
-    for row in lst:
-        col = tuple()
-        for col_value in row:
-            if isinstance(col_value, Decimal):
-                col += (float(col_value),)
-            elif isinstance(col_value, date):
-                col += (str(col_value),)
-            else:
-                col += (col_value,)
-        result.append(col)
-    return result
 
 def get_ddl_query(table_schema, table_name):
     ddl_query = f"""
@@ -203,7 +190,7 @@ def get_ddl_table(
     except Exception as e:
         raise Exception(f"Error: the table {table_schema}.{table_name} has not been found.Details:\n{str(e)}")
 
-    return result[0][0]
+    return result[0]["ddl"]
 
 def get_tables_in_schema_query(table_schema):
     query = f"""
@@ -254,7 +241,7 @@ def tables_definitions_in_the_schema(
     ddls = []
     for table in tables:
 
-        ddl_table = get_ddl_table(table_schema, table[0], mode, connection_file, source_name, host_env, port_env, db_env, user_env, pwd_env)
+        ddl_table = get_ddl_table(table_schema, table["table_name"], mode, connection_file, source_name, host_env, port_env, db_env, user_env, pwd_env)
 
         ddls.append(ddl_table)
 

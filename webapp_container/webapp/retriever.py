@@ -1,9 +1,8 @@
 import datasets
 from llama_index.core.schema import Document
-from functions import build_prompt, get_connection_details, run_query, rag_prompt, json, convert_dtype
+from functions import build_prompt, get_connection_details, run_query, rag_prompt, json
 from reranker import table_declarations, rank_tables
 from models import llm
-from chromadb import HttpClient
 
 def get_sql_data(query, top_n=2):
     try:
@@ -34,12 +33,6 @@ def get_sql_data(query, top_n=2):
     )
 
     sql_response = run_query(sql_query, host, port, dbname, user, password)
-
-    if len(sql_response) == 0:
-        raise Exception(f"The following sql query used to retrieve information did not return any result:\n{sql_query}")
-
-    # Converting decimal objects into float to create a json string
-    sql_response = convert_dtype(sql_response)
 
     json_table = json.dumps(sql_response)
 
