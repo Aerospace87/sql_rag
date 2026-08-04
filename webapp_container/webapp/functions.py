@@ -246,6 +246,86 @@ def tables_definitions_in_the_schema(
         ddls.append(ddl_table)
 
     return ddls
+    
+def get_table_description_query(schema, table):
+    
+    query = f"""
+SELECT
+    c.relname AS table_name,
+    obj_description(c.oid) AS table_description
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE c.relkind = 'r'
+AND n.nspname = '{schema}' AND c.relname = '{table}'
+    """
+    
+    
+    return query
+    
+    
+def get_table_description(schema, table):
+    """Obtains descriptions of a table in a schema."""
+    
+    query = get_tables_description_query(tables_dict)
+
+    host, port, dbname, user, password = get_connection_details(
+        mode=mode,
+        connection_file=connection_file,
+        source_name=source_name,
+        host_env=host_env,
+        port_env=port_env,
+        db_env=db_env,
+        user_env=user_env,
+        pwd_env =pwd_env
+    )
+
+    try:
+        result = run_query(query, host, port, dbname, user, password)
+
+    except Exception as e:
+        raise Exception(f"Error: The retrieval of information about the following tables failed:{'\n'.join(tables.values())} failed. Details:\n{str(e)}")
+
+    return result
+    
+def get_columns_description_query(schema, table):
+    query = f"""
+SELECT
+    cols.column_name,
+    pgd.description as column_description
+FROM pg_catalog.pg_statio_all_tables st
+JOIN information_schema.columns cols
+  ON cols.table_schema = st.schemaname
+ AND cols.table_name = st.relname
+LEFT JOIN pg_catalog.pg_description pgd
+  ON pgd.objoid = st.relid
+ AND pgd.objsubid = cols.ordinal_position
+WHERE cols.table_schema = '{schema}' and cols.table_name = '{table}'
+ORDER BY cols.ordinal_position;
+    """
+    
+    return query
+    
+def get_columns_description(schema:str, table: str):
+    query = get_columns_description_query(schema, table)
+
+    host, port, dbname, user, password = get_connection_details(
+        mode=mode,
+        connection_file=connection_file,
+        source_name=source_name,
+        host_env=host_env,
+        port_env=port_env,
+        db_env=db_env,
+        user_env=user_env,
+        pwd_env =pwd_env
+    )
+
+    try:
+        result = run_query(query, host, port, dbname, user, password)
+
+    except Exception as e:
+        raise Exception(f"Error: The retrieval of columns information about the table {schema}.{table} failed. Details:\n{str(e)}")
+
+    return result
 
 
 
