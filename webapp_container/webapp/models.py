@@ -8,7 +8,7 @@ token = os.getenv('HF_TOKEN')
 
 # HF main model to chat
 chat_llm = HuggingFaceInferenceAPI(
-    model_name="Qwen/Qwen2-7B-Instruct",
+    model_name="Qwen/Qwen2.5-Coder-32B-Instruct",
     token=token,
     temperature=1e-03,
     max_tokens=50,
