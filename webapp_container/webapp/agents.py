@@ -1,11 +1,11 @@
 import asyncio
-from tools import add_two_numbers_tools, web_search_tool
+from tools import add_two_numbers_tools
 from llama_index.core.agent.workflow import AgentWorkflow, AgentStream, ToolCallResult
 from models import chat_llm
 
 # Create Alfred, our gala agent, with the guest info tool
 alfred = AgentWorkflow.from_tools_or_functions(
-    [add_two_numbers_tools, web_search_tool],
+    [add_two_numbers_tools],
     llm=chat_llm
 )
 
