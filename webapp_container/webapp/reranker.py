@@ -1,17 +1,6 @@
-from transformers import AutoModelForSequenceClassification
 from typing import List, Tuple
 from functions import tables_definitions_in_the_schema
-
-reranker_model = AutoModelForSequenceClassification.from_pretrained(
-    'jinaai/jina-reranker-v2-base-multilingual',
-    dtype="auto",
-    trust_remote_code=True,
-)
-
-reranker_model.to('cpu')
-
-# Setting the model in the inference mode
-reranker_model.eval()
+from models import reranker_model
 
 # Tables DDLs
 table_declarations = tables_definitions_in_the_schema("public")

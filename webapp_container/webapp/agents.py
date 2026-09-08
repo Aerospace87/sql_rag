@@ -1,12 +1,12 @@
 import asyncio
 from tools import add_two_numbers_tools, web_search_tool
 from llama_index.core.agent.workflow import AgentWorkflow, AgentStream, ToolCallResult
-from models import llm
+from models import chat_llm
 
 # Create Alfred, our gala agent, with the guest info tool
 alfred = AgentWorkflow.from_tools_or_functions(
     [add_two_numbers_tools, web_search_tool],
-    llm=llm
+    llm=chat_llm
 )
 
 async def debug_agent(handler):
