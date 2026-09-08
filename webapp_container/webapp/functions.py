@@ -10,6 +10,7 @@ def build_prompt(query, tables):
 Generate a SQL query to answer the following question from the user:
 \"{query}\"
 
+If the SQL query has to filter any column you must make those columns visible to show their values.
 The SQL query should use only tables with the following SQL definitions:
 
 """
