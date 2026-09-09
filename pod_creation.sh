@@ -42,6 +42,8 @@ localhost/sql_rag_dev
 # Creation of the container mlflow to use mlflow UI running on 0.0.0.0:5001
 podman run -d --rm \
 --name mlflow \
+-v sqlite:/sqlite \
+-v mlruns:/mlruns \
 --pod pod_rag_dev \
 mlflow_img
 
