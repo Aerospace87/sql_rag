@@ -8,6 +8,7 @@ podman run -d --rm \
 -p 5001:5001 \
 --name mlflow \
 -v sqlite:/sqlite \
+-v mlruns:/mlruns \
 mlflow_img
 
 # Show all active containers
