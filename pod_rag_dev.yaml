@@ -1,0 +1,63 @@
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# Created with podman-4.9.3
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2026-09-19T15:12:48Z"
+  labels:
+    app: podragdev
+  name: podragdev
+spec:
+  containers:
+  - args:
+    - postgres
+    env:
+    - name: TERM
+      value: xterm
+    image: localhost/postgres_rag_dev:latest
+    name: postgresdbdev
+    stdin: true
+    tty: true
+    volumeMounts:
+    - mountPath: /var/lib/postgresql/18/docker
+      name: home-aerospace-Desktop-AgentsCourse-guest_stories-postgres_container-data-host-0
+    - mountPath: /var/lib/postgresql
+      name: a067c0d6405818200736620a8c4bef9aa3288a0d8adb5e72da3598393f20eab6-pvc
+  - env:
+    - name: TERM
+      value: xterm
+    image: localhost/sql_rag_dev:latest
+    name: sqlragdev
+    stdin: true
+    tty: true
+    volumeMounts:
+    - mountPath: /webapp
+      name: home-aerospace-Desktop-AgentsCourse-guest_stories-webapp_container-webapp-host-0
+  - image: localhost/mlflow_img:latest
+    name: mlflow
+    volumeMounts:
+    - mountPath: /sqlite
+      name: sqlite-pvc
+    - mountPath: /mlruns
+      name: mlruns-pvc
+  hostNetwork: true
+  volumes:
+  - hostPath:
+      path: /home/aerospace/Desktop/AgentsCourse/guest_stories/postgres_container/data
+      type: Directory
+    name: home-aerospace-Desktop-AgentsCourse-guest_stories-postgres_container-data-host-0
+  - name: a067c0d6405818200736620a8c4bef9aa3288a0d8adb5e72da3598393f20eab6-pvc
+    persistentVolumeClaim:
+      claimName: a067c0d6405818200736620a8c4bef9aa3288a0d8adb5e72da3598393f20eab6
+  - hostPath:
+      path: /home/aerospace/Desktop/AgentsCourse/guest_stories/webapp_container/webapp
+      type: Directory
+    name: home-aerospace-Desktop-AgentsCourse-guest_stories-webapp_container-webapp-host-0
+  - name: sqlite-pvc
+    persistentVolumeClaim:
+      claimName: sqlite
+  - name: mlruns-pvc
+    persistentVolumeClaim:
+      claimName: mlruns
