@@ -13,18 +13,24 @@ app = FastAPI()
 @mlflow.trace(name="agent_run")
 async def run_agent(query):
 
+    
+    
     # Creation of the SQL-RAG prompt
-    prompt, token_usage = get_sql_data(query, top_n=3)
-    span = mlflow.get_current_active_span()
+    with mlflow.start_span(name="sql_query", span_type="LLM") as span:
+        prompt, token_usage = get_sql_data(query, top_n=3)
 
-    span.set_attribute("mlflow.chat.tokenUsage", token_usage)
+        span.set_attribute("mlflow.chat.tokenUsage", token_usage)
     
     # Response from the agent
-    response = await alfred.run(prompt)
+    with mlflow.start_span(name="llm_chat", span_type="AGENT") as span:
+        response = await alfred.run(prompt)
+    
+        token_usage = set_token_usage_mlflow(response)
         
-    token_usage = set_token_usage_mlflow(response)
         
-    span.set_attribute("mlflow.chat.tokenUsage", token_usage)
+        span.set_attribute("mlflow.chat.tokenUsage", token_usage)
+        
+        print(span.get_attribute("mlflow.chat.tokenUsage"))
         
     return response
 
