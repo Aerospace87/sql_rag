@@ -328,6 +328,23 @@ def get_columns_description(schema:str, table: str):
 
     return result
 
+def set_token_usage_mlflow(response):
+    """Function to set the mlflow attribute to show token consumption in the ui"""
+        
+    usage = response.raw.usage
+    
+            
+    token_usage = {
+        "input_tokens": usage.prompt_tokens,
+        "output_tokens": usage.completion_tokens,
+        "total_tokens": usage.total_tokens
+    }
+    
+            
+    return token_usage
+    
+
+
 
 
 if __name__ == "__main__":
