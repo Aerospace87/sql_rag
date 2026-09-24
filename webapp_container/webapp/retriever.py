@@ -1,8 +1,9 @@
 import datasets
 from llama_index.core.schema import Document
-from functions import build_prompt, get_connection_details, run_query, rag_prompt, json
+from functions import build_prompt, get_connection_details, run_query, rag_prompt, json, set_token_usage_mlflow
 from reranker import table_declarations, rank_tables
 from models import coding_llm
+from mlflow import start_span
 
 def get_sql_data(query, top_n=2):
     try:
@@ -16,8 +17,10 @@ def get_sql_data(query, top_n=2):
 
     try:
         response = coding_llm.complete(prompt)
+        token_usage = set_token_usage_mlflow(response)
+            
     except Exception as e:
-        raise Exception("Creation of sql query for RAG failed:\n{str(e)}")
+        raise Exception(f"Creation of sql query for RAG failed:\n{str(e)}")
 
     sql_query = str(response)\
         .replace("```sql", "")\
@@ -36,7 +39,7 @@ def get_sql_data(query, top_n=2):
 
     json_table = json.dumps(sql_response)
 
-    return rag_prompt(query, json_table, sql_query)
+    return rag_prompt(query, json_table, sql_query), token_usage
 
 def get_data_from_semantic_search(query, collection_name, top_n=2, host="localhost", port=8000):
     chroma_client = HttpClient(host=host, port=port)
