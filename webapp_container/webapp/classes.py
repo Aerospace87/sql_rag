@@ -19,6 +19,7 @@ class HuggingFaceInferenceAPIwithTokenCount(HuggingFaceInferenceAPI):
                 tool_call_strs = []
                 cur_index = -1
                 
+                       
                 generator = await self._async_client.chat_completion(
                     messages=self._to_huggingface_messages(messages),
                     stream=True,
@@ -28,7 +29,15 @@ class HuggingFaceInferenceAPIwithTokenCount(HuggingFaceInferenceAPI):
                 
                 
                 async for chunk in generator:
-                        
+                
+                    if chunk.usage is not None:
+                       token_usage = {
+                            "input_tokens": chunk.usage.prompt_tokens,
+                            "output_tokens": chunk.usage.completion_tokens,
+                            "total_tokens": chunk.usage.total_tokens
+                        } 
+                    else:
+                        token_usage = {}    	
 
                     chunk: ChatCompletionStreamOutput = chunk
                     
@@ -50,6 +59,8 @@ class HuggingFaceInferenceAPIwithTokenCount(HuggingFaceInferenceAPI):
                     
 
                         additional_kwargs = {"tool_calls": tool_calls} if tool_calls else {}
+                        
+                        additional_kwargs["token_usage"] = token_usage
 
                     yield ChatResponse(
                         message=ChatMessage(
@@ -58,7 +69,7 @@ class HuggingFaceInferenceAPIwithTokenCount(HuggingFaceInferenceAPI):
                             additional_kwargs=additional_kwargs,
                         ),
                         delta=delta,
-                        raw=chunk,
+                        raw=chunk
                     )
 
                 await self._async_client.close()
