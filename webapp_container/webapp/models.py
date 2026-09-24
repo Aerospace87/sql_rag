@@ -1,24 +1,28 @@
-from llama_index.llms.huggingface_api import HuggingFaceInferenceAPI
 from transformers import AutoModelForSequenceClassification
+from classes import HuggingFaceInferenceAPIwithTokenCount
 import os
+
+# Models ids
+chat_llm_model_id = "Qwen/Qwen2.5-Coder-32B-Instruct"
+coding_llm_id = "Qwen/Qwen2.5-Coder-32B-Instruct"
+reranker_id = "jinaai/jina-reranker-v2-base-multilingual"
 
 # get HF token
 token = os.getenv('HF_TOKEN')
 
-
 # HF main model to chat
-chat_llm = HuggingFaceInferenceAPI(
-    model_name="Qwen/Qwen2.5-Coder-32B-Instruct",
+chat_llm = HuggingFaceInferenceAPIwithTokenCount(
+    model_name=chat_llm_model_id,
     token=token,
     temperature=1e-03,
     max_tokens=50,
-    provider = "auto"
+    provider="auto"
 )
 
 
 # HF model to write sql queries
-coding_llm = HuggingFaceInferenceAPI(
-    model_name="Qwen/Qwen2.5-Coder-32B-Instruct",
+coding_llm = HuggingFaceInferenceAPIwithTokenCount(
+    model_name=coding_llm_id,
     token=token,
     temperature=1e-03,
     max_tokens=50,
@@ -27,7 +31,7 @@ coding_llm = HuggingFaceInferenceAPI(
 
 # HF model to rerank tables
 reranker_model = AutoModelForSequenceClassification.from_pretrained(
-    'jinaai/jina-reranker-v2-base-multilingual',
+    reranker_id,
     dtype="auto",
     trust_remote_code=True,
 )
