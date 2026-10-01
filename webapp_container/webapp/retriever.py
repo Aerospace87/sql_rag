@@ -3,8 +3,7 @@ from llama_index.core.schema import Document
 from functions import build_prompt, get_connection_details, run_query, rag_prompt, json, set_token_usage_mlflow
 from reranker import table_declarations, rank_tables
 from models import coding_llm
-#from mlflow import start_span
-from guardrails import check_sql_query_not_malicious
+from guardrails import SQLGuardrail
 
 def get_sql_data(query, top_n=2):
     try:
@@ -27,7 +26,10 @@ def get_sql_data(query, top_n=2):
         .replace("```sql", "")\
         .replace("```", "")
         
-    sql_query = check_sql_query_not_malicious(sql_query)
+    check_query = SQLGuardrail(sql_query)
+    
+    if not check_query.allowed:
+        raise Exception(check_query.reason)
 
     host, port, dbname, user, password = get_connection_details(
         mode="env",

@@ -195,3 +195,4 @@ yarl==1.22.0
 zipp==3.23.0
 mlflow==3.14.0
 simplejson==4.1.1
+sqlglot==30.20.0
