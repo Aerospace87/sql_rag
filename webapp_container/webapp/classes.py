@@ -23,6 +23,7 @@ class HuggingFaceInferenceAPIwithTokenCount(HuggingFaceInferenceAPI):
                 generator = await self._async_client.chat_completion(
                     messages=self._to_huggingface_messages(messages),
                     stream=True,
+                    stream_options={"include_usage": True},
                     **model_kwargs,
                 )
                 
