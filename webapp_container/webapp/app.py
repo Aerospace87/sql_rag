@@ -27,6 +27,8 @@ async def run_agent(query):
         span.set_attribute("mlflow.llm.cost", costs)
         
         span.set_attribute("mlflow.llm.provider", provider)
+        
+        span.set_attribute("mlflow.llm.model", coding_llm_id)
     
     # Response from the agent
     with mlflow.start_span(name="llm_chat", span_type="AGENT") as span:
@@ -36,13 +38,15 @@ async def run_agent(query):
         
         costs = compute_costs(token_usage, chat_llm_model_id)
         
-        provider = get_best_prices_and_provider(coding_llm_id)[0]
+        provider = get_best_prices_and_provider(chat_llm_model_id)[0]
 
         span.set_attribute("mlflow.chat.tokenUsage", token_usage)
         
         span.set_attribute("mlflow.llm.cost", costs)
         
         span.set_attribute("mlflow.llm.provider", provider)
+        
+        span.set_attribute("mlflow.llm.model", chat_llm_model_id)
         
     return response
 
