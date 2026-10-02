@@ -3,6 +3,7 @@ from psycopg2 import connect
 from psycopg2.extras import RealDictCursor
 from decimal import Decimal
 from datetime import date
+import requests
 
 def build_prompt(query, tables):
     """Function to generate a prompt to instruct the agent to create a sql query"""
@@ -344,11 +345,63 @@ def set_token_usage_mlflow(response):
     
             
     return token_usage
+
+def get_providers(model_id):
+
+    """Get information about model provider"""
     
+    url = f"https://router.huggingface.co/v1/models/{model_id}"
+
+    response = requests.get(url).json()
+    
+    if response.get("error"):
+       raise Exception(response["error"])
+    
+    return response["data"]["providers"]
 
 
+def get_best_prices_and_provider(model_id):
 
+    """Finds the provider with minimum input costs per mln of tokens"""
+    
+    providers = get_providers(model_id)
 
+    min_input_price = None
+    output_price = None
+    provider = ""
+
+    for idx, p in enumerate(providers):
+        if p["status"] == "live" and p.get("pricing", False):
+    
+            provider_input_price = p["pricing"]["input"]
+            provider_output_price = p["pricing"]["output"]
+        
+            if min_input_price is None:
+                min_input_price = provider_input_price
+                output_price = provider_output_price
+                provider = p["provider"]
+            elif min_input_price and provider_input_price < min_input_price:
+                min_input_price = provider_input_price
+                output_price = provider_output_price
+                provider = p["provider"]
+           
+        
+    return provider, min_input_price, output_price
+    
+    
+def compute_costs(token_usage, model_id):
+
+    prov, input_price, output_price = get_best_prices_and_provider(model_id)
+
+    costs = {
+        "input_cost": token_usage["input_tokens"] * (input_price/1000000),
+        "output_cost": token_usage["output_tokens"] * (output_price/1000000),
+        "total_cost": token_usage["input_tokens"] * (input_price/1000000) + token_usage["output_tokens"] *   
+                             (output_price/1000000)
+    }
+                
+    return costs
+        
 if __name__ == "__main__":
     print(build_prompt("ciao", ["a", "b"]))
 

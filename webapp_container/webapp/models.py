@@ -1,14 +1,7 @@
 from transformers import AutoModelForSequenceClassification
 from classes import HuggingFaceInferenceAPIwithTokenCount
-import os
-
-# Models ids
-chat_llm_model_id = "Qwen/Qwen2.5-Coder-32B-Instruct"
-coding_llm_id = "Qwen/Qwen2.5-Coder-32B-Instruct"
-reranker_id = "jinaai/jina-reranker-v2-base-multilingual"
-
-# get HF token
-token = os.getenv('HF_TOKEN')
+from functions import get_best_prices_and_provider
+from parameters import chat_llm_model_id, coding_llm_id, reranker_id, token
 
 # HF main model to chat
 chat_llm = HuggingFaceInferenceAPIwithTokenCount(
@@ -16,7 +9,7 @@ chat_llm = HuggingFaceInferenceAPIwithTokenCount(
     token=token,
     temperature=1e-03,
     max_tokens=50,
-    provider="auto"
+    provider=get_best_prices_and_provider(chat_llm_model_id)[0]
 )
 
 
@@ -26,7 +19,7 @@ coding_llm = HuggingFaceInferenceAPIwithTokenCount(
     token=token,
     temperature=1e-03,
     max_tokens=50,
-    provider = "auto"
+    provider = get_best_prices_and_provider(chat_llm_model_id)[0]
 )
 
 # HF model to rerank tables
