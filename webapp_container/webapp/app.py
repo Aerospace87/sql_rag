@@ -2,8 +2,10 @@ from llama_index.core.workflow import Context
 from agents import alfred, asyncio
 from retriever import get_sql_data
 from fastapi import FastAPI
-from functions import set_token_usage_mlflow, compute_costs, get_best_prices_and_provider
-from parameters import chat_llm_model_id, coding_llm_id
+from functions import set_token_usage_mlflow, compute_costs, get_best_prices_and_provider, get_span_attributes
+from parameters import chat_llm_model_id, coding_llm_id, domain_guardrail_id
+from models import domain_guardrail
+from prompts import domain_guardrail_prompt
 import sys
 import mlflow
 import traceback
@@ -14,6 +16,22 @@ app = FastAPI()
 @mlflow.trace(name="agent_run")
 async def run_agent(query):
 
+    with mlflow.start_span(name="domain_guardrail", span_type="LLM") as span:
+        response = domain_guardrail.complete(domain_guardrail_prompt(query))
+           
+        token_usage = set_token_usage_mlflow(response)
+        
+        costs = compute_costs(token_usage, domain_guardrail_id)
+        
+        provider = get_best_prices_and_provider(domain_guardrail_id)[0]
+        
+        span_attributes = get_span_attributes(token_usage, costs, provider, domain_guardrail_id)
+        
+        span.set_attributes(span_attributes)
+        
+        if str(response) != "relevant":
+            return ("Irrelevant query")
+        
     # Creation of the SQL-RAG prompt
     with mlflow.start_span(name="sql_query", span_type="LLM") as span:
         prompt, token_usage = get_sql_data(query, top_n=3)
@@ -22,13 +40,9 @@ async def run_agent(query):
         
         provider = get_best_prices_and_provider(coding_llm_id)[0]
 
-        span.set_attribute("mlflow.chat.tokenUsage", token_usage)
+        span_attributes = get_span_attributes(token_usage, costs, provider, coding_llm_id)
         
-        span.set_attribute("mlflow.llm.cost", costs)
-        
-        span.set_attribute("mlflow.llm.provider", provider)
-        
-        span.set_attribute("mlflow.llm.model", coding_llm_id)
+        span.set_attributes(span_attributes)
     
     # Response from the agent
     with mlflow.start_span(name="llm_chat", span_type="AGENT") as span:
@@ -40,13 +54,9 @@ async def run_agent(query):
         
         provider = get_best_prices_and_provider(chat_llm_model_id)[0]
 
-        span.set_attribute("mlflow.chat.tokenUsage", token_usage)
+        span_attributes = get_span_attributes(token_usage, costs, provider, chat_llm_model_id)
         
-        span.set_attribute("mlflow.llm.cost", costs)
-        
-        span.set_attribute("mlflow.llm.provider", provider)
-        
-        span.set_attribute("mlflow.llm.model", chat_llm_model_id)
+        span.set_attributes(span_attributes)
         
     return response
 
