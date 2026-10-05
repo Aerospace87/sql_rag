@@ -1,24 +1,12 @@
-from docker.io/ubuntu:25.10
+from localhost/sql_rag_dev_base
 
-# Setting the working directory inside the container
 WORKDIR /webapp
 
-# Variable VERSION
-ARG VERSION
-
-# Setting Label Schema Convention with version
-LABEL org.label-schema.version=$VERSION
-
 # Copy files from the current directory to the container working directory
-COPY ./requirements.txt .
-
-# Update system, installing python, pip
-RUN apt-get update && \
-    apt-get -y install python3.13-full --no-install-recommends && \
-    apt-get -y install pip --no-install-recommends
+COPY ./requirements-extra.txt .
  
 # Install packages and clean apt-get lists   
-RUN pip install -r requirements.txt --break-system-packages --no-cache-dir && \
+RUN pip install -r requirements-extra.txt --break-system-packages && \
     rm -rf /var/lib/apt/lists/*
 
 
