@@ -46,20 +46,6 @@ def get_sql_data(query, top_n=2):
 
     return rag_prompt(query, json_table, sql_query), token_usage
 
-def get_data_from_semantic_search(query, collection_name, top_n=2, host="localhost", port=8000):
-    chroma_client = HttpClient(host=host, port=port)
-
-    collection = chroma_client.get_collection(name=collection_name)
-
-    results = collection.query(
-        query_texts=query,
-        n_results=top_n
-    )
-
-    return results["documents"]
-
-
-
 if __name__ == '__main__':
     query = "Identify the price of the most expensive article"
 
