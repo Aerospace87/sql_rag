@@ -6,6 +6,9 @@ from functions import set_token_usage_mlflow, compute_costs, get_best_prices_and
 from parameters import chat_llm_model_id, coding_llm_id, domain_guardrail_id
 from models import domain_guardrail
 from prompts import domain_guardrail_prompt
+from judges import scorer_sampling, relevance_to_query_judge
+from mlflow.genai.scorers import get_scorer
+from mlflow.genai import list_scorers
 import sys
 import mlflow
 import traceback
@@ -17,9 +20,9 @@ app = FastAPI()
 async def run_agent(query):
 
     with mlflow.start_span(name="domain_guardrail", span_type="LLM") as span:
-        response = domain_guardrail.complete(domain_guardrail_prompt(query))
+        response_domain_guardrail = domain_guardrail.complete(domain_guardrail_prompt(query))
            
-        token_usage = set_token_usage_mlflow(response)
+        token_usage = set_token_usage_mlflow(response_domain_guardrail)
         
         costs = compute_costs(token_usage, domain_guardrail_id)
         
@@ -29,8 +32,9 @@ async def run_agent(query):
         
         span.set_attributes(span_attributes)
         
-        if str(response) != "relevant":
-            return ("Irrelevant query")
+        if str(response_domain_guardrail) != "relevant":
+             return ("The question asked is not relevant !")
+
         
     # Creation of the SQL-RAG prompt
     with mlflow.start_span(name="sql_query", span_type="LLM") as span:
@@ -57,6 +61,22 @@ async def run_agent(query):
         span_attributes = get_span_attributes(token_usage, costs, provider, chat_llm_model_id)
         
         span.set_attributes(span_attributes)
+    
+    root_span = mlflow.get_current_active_span()
+    
+    relevance_to_query_judge_registered = get_scorer(name="relevance_to_query_judge_registered")
+    
+    
+    feedback = relevance_to_query_judge_registered(
+        inputs={"query": query},
+        outputs=str(response)
+    )
+    
+    assessment = mlflow.log_assessment(
+        trace_id = root_span.trace_id,
+        assessment=feedback
+    )
+ 
         
     return response
 
@@ -66,7 +86,22 @@ async def startup():
     mlflow.set_tracking_uri("http://localhost:5001")
 	    
     # Set experiment
-    mlflow.set_experiment("alfred-agent")
+    experiment = mlflow.set_experiment("rag_agent")
+    
+    # Setting correctness evaluation via a judge
+    experiment_id = experiment.experiment_id
+    
+    # Register the judge if not already registered
+    scorers = list_scorers(experiment_id=experiment_id)
+    
+    scores = [score.name for score in scorers]
+    
+    if "relevance_to_query_judge_registered" not in scores:
+    
+        relevance_to_query_judge_registered = relevance_to_query_judge.register(
+            name="relevance_to_query_judge_registered", 
+            experiment_id=experiment_id
+        ) 
 
     # Activating autolog
     mlflow.llama_index.autolog()
