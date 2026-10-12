@@ -48,13 +48,25 @@ You are an assistant that classifies if the query provided by the user:
 is relevant about products and promotions of a small supermarket.
 Do not provide explanations. Make sure you only output the word \"relevant\" if the query is relevant or
 \"irrelevant\" if the query is not relevant. 
-"""
-    
-    
-    
+""" 
     return prompt
+    
+def prompt_retrieval_relevance_judge():
+    prompt = """
+You are an evaluator of relevance for a SQL RAG system.
 
+Evaluate whether the retrived content is relevant to the user query.
 
+User query:
+{{ inputs }}
+
+Retrieved content:
+{{ outputs }}
+
+Return the string "Pass" if the content is relevant, "Fail" otherwise.
+"""
+
+return prompt
 
 
 

@@ -5,7 +5,6 @@ from fastapi import FastAPI
 from parameters import chat_llm_model_id, coding_llm_id, domain_guardrail_id
 from models import domain_guardrail, coding_llm
 from prompts import domain_guardrail_prompt
-from judges import scorer_sampling, relevance_to_query_judge
 from mlflow.genai.scorers import get_scorer
 from mlflow.genai import list_scorers
 from functions import (
@@ -15,6 +14,11 @@ from functions import (
     get_span_attributes,
     rag_prompt,
     specify_span_attributes
+)
+from judges import (
+    scorer_sampling,
+    relevance_to_query_judge, 
+    retrieval_relevance_judge
 )
 import sys
 import mlflow
@@ -36,7 +40,7 @@ async def run_agent(query):
              return ("The question asked is not relevant !")
         
     # Creation of the SQL-RAG prompt
-    with mlflow.start_span(name="sql_query", span_type="LLM") as span:
+    with mlflow.start_span(name="sql_query", span_type="RETRIEVER") as span:
         sql_query_prompt = create_prompt_for_sql_query(query, top_n=3)
 
         response_sql_query_prompt = coding_llm.complete(sql_query_prompt)
@@ -53,6 +57,7 @@ async def run_agent(query):
         json_table = retrieve_data(sql_query)
 
         prompt = rag_prompt(query, json_table, sql_query)
+        
     
     # Response from the agent
     with mlflow.start_span(name="llm_chat", span_type="AGENT") as span:
@@ -61,21 +66,33 @@ async def run_agent(query):
         # Setting span attributes
         specify_span_attributes(response, chat_llm_model_id, span)
 
-    
+    # Evaluations
     root_span = mlflow.get_current_active_span()
     
     relevance_to_query_judge_registered = get_scorer(name="relevance_to_query_judge_registered")
     
+    retrieval_relevance_judge_registered = get_scorer(name="retrieval_relevance_judge_registered")
     
-    feedback = relevance_to_query_judge_registered(
+    
+    relevance_to_query_feedback = relevance_to_query_judge_registered(
         inputs={"query": query},
         outputs=str(response)
     )
     
-    assessment = mlflow.log_assessment(
+    relevance_to_query_assessment = mlflow.log_assessment(
         trace_id = root_span.trace_id,
-        assessment=feedback
+        assessment=relevance_to_query_feedback
     )
+    
+    retrieval_relevance_feedback = retrieval_relevance_judge_registered(
+        inputs = {"inputs": query},
+        outputs = {"outputs": json_table}
+    )
+            
+    retrieval_relevance_assessment = mlflow.log_assessment(
+        trace_id = root_span.trace_id,
+        assessment=retrieval_relevance_feedback
+    )  
  
         
     return response
@@ -101,7 +118,15 @@ async def startup():
         relevance_to_query_judge_registered = relevance_to_query_judge.register(
             name="relevance_to_query_judge_registered", 
             experiment_id=experiment_id
-        ) 
+        )
+        
+    if "retrieval_relevance_judge_registered" not in scores:
+        retrieval_relevance_judge_registered = retrieval_relevance_judge.register(
+            name="retrieval_relevance_judge_registered",
+            experiment_id=experiment_id
+        )
+        
+        
 
     # Activating autolog
     mlflow.llama_index.autolog()
@@ -115,6 +140,7 @@ async def main(query: str):
             response = await run_agent(query)
             
             return {"query": query, "response": str(response)}
+            
 
     except Exception as e:
     
