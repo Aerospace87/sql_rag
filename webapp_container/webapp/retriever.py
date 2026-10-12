@@ -42,22 +42,7 @@ def retrieve_data(sql_query):
 
     json_table = json.dumps(sql_response)
     
-    return json_table   
-
-
-def get_sql_data(query, top_n=2):
-
-    prompt = create_prompt_for_sql_query(query, top_n=top_n)
-
-    response = coding_llm.complete(prompt)
-        
-    token_usage = set_token_usage_mlflow(response)
-
-    sql_query = validate_sql_query(response)
-
-    json_table = retrieve_data(sql_query)
-
-    return rag_prompt(query, json_table, sql_query), token_usage
+    return json_table
 
 if __name__ == '__main__':
     query = "Identify the price of the most expensive article"

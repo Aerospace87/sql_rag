@@ -1,10 +1,10 @@
 from llama_index.core.workflow import Context
 from agents import alfred, asyncio
-from retriever import get_sql_data
+from retriever import create_prompt_for_sql_query, validate_sql_query, retrieve_data
 from fastapi import FastAPI
-from functions import set_token_usage_mlflow, compute_costs, get_best_prices_and_provider, get_span_attributes
+from functions import set_token_usage_mlflow, compute_costs, get_best_prices_and_provider, get_span_attributes, rag_prompt
 from parameters import chat_llm_model_id, coding_llm_id, domain_guardrail_id
-from models import domain_guardrail
+from models import domain_guardrail, coding_llm
 from prompts import domain_guardrail_prompt
 from judges import scorer_sampling, relevance_to_query_judge
 from mlflow.genai.scorers import get_scorer
@@ -38,7 +38,12 @@ async def run_agent(query):
         
     # Creation of the SQL-RAG prompt
     with mlflow.start_span(name="sql_query", span_type="LLM") as span:
-        prompt, token_usage = get_sql_data(query, top_n=3)
+        sql_query_prompt = create_prompt_for_sql_query(query, top_n=3)
+
+        response = coding_llm.complete(sql_query_prompt)
+        
+        # Setting span attributes
+        token_usage = set_token_usage_mlflow(response)
         
         costs = compute_costs(token_usage, coding_llm_id)
         
@@ -47,6 +52,16 @@ async def run_agent(query):
         span_attributes = get_span_attributes(token_usage, costs, provider, coding_llm_id)
         
         span.set_attributes(span_attributes)
+        
+        # Create and validate the query for the db
+        
+        sql_query = validate_sql_query(response)
+        
+        # Retrieving data from db
+
+        json_table = retrieve_data(sql_query)
+
+        prompt = rag_prompt(query, json_table, sql_query)
     
     # Response from the agent
     with mlflow.start_span(name="llm_chat", span_type="AGENT") as span:
