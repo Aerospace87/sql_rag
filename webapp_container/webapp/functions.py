@@ -373,6 +373,19 @@ def get_span_attributes(token_usage, costs, provider, model_id):
     }
     
     return span_attributes
+    
+def specify_span_attributes(response, model_id, span):
+    """Set token usage, costs, provider attributes per span"""
+    
+    token_usage = set_token_usage_mlflow(response)
+        
+    costs = compute_costs(token_usage, model_id)
+        
+    provider = get_best_prices_and_provider(model_id)[0]
+        
+    span_attributes = get_span_attributes(token_usage, costs, provider, model_id)
+        
+    span.set_attributes(span_attributes)
         
 if __name__ == "__main__":
     print(build_prompt("ciao", ["a", "b"]))
