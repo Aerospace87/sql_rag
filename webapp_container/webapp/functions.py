@@ -386,6 +386,49 @@ def specify_span_attributes(response, model_id, span):
     span_attributes = get_span_attributes(token_usage, costs, provider, model_id)
         
     span.set_attributes(span_attributes)
+    
+def get_root_trace_attributes(response_list):
+    """Computes total token usage and costs per root trace"""
+    
+    token_usage_final = {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+    }
+    
+    costs_final = {
+        "input_cost": 0,
+        "output_cost": 0,
+        "total_cost": 0
+    } 
+    
+    for (resp, model_id) in response_list:
+        token_usage = set_token_usage_mlflow(resp)
+        
+        costs = compute_costs(token_usage, model_id)
+        
+        for ku in token_usage_final.keys():
+            token_usage_final[ku] += token_usage[ku]
+            
+        for kc in costs_final.keys():
+            costs_final[kc] += costs[kc]
+            
+    return token_usage_final, costs_final
+    
+def specify_root_trace_attributes(response_dict, span):
+    token_usage_final, costs_final = get_root_trace_attributes(response_dict)
+    
+    span_attributes = {
+            "mlflow.chat.tokenUsage": token_usage_final,
+            "mlflow.llm.cost": costs_final
+    }
+    
+    span.set_attributes(span_attributes)
+    
+    
+        
+        
+    
         
 if __name__ == "__main__":
     print(build_prompt("ciao", ["a", "b"]))

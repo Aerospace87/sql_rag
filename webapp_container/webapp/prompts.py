@@ -66,7 +66,7 @@ Retrieved content:
 Return the string "Pass" if the content is relevant, "Fail" otherwise.
 """
 
-return prompt
+    return prompt
 
 
 
